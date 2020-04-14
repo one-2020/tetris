@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>tetris</title>
+    <style>
+      .container {
+        position: relative;
+        width: 200px;
+        height: 360px;
+        background-color: darkgray;
+        margin: 0 auto;
+      }
+      .container > .item {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 20px;
+        height: 20px;
+        background-color: darkturquoise;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container" class="container"></div>
+
+    <script>
+      const step = 20; // 元素每次移动的距离
+      const row_count = 18; // 分割容器 18行，10列
+      const col_count = 10;
+      // 16宫格的位置
+      let currentX = 0;
+      let currentY = 0;
+      // 模型的数据源
+      let MODELS = [
+        {
+          // L 模型
+          0: {
+            row: 2,
+            col: 0,
+          },
+          1: {
+            row: 2,
+            col: 1,
+          },
+          2: {
+            row: 2,
+            col: 2,
+          },
+          3: {
+            row: 1,
+            col: 2,
+          },
+        },
+      ];
+      let currentModel = {}; // 表示当前使用的模型
+
+      /* 入口函数 */
+      function main() {
+        createModel();
+        onkeydown();
+      }
+
+      /* 创建模型 */
+      function createModel() {
+        currentModel = MODELS[0];
+        // 根据当前模型生成对应的块元素
+        for (const key in currentModel) {
+          let divEle = document.createElement("div");
+          divEle.className = "item";
+          let container = document.getElementById("container");
+          container.appendChild(divEle);
+        }
+        locationModel(); // 定位每个块元素的位置
+      }
+
+      /* 根据数据定位每个块元素的位置 */
+      function locationModel() {
+        // 判断元素的边界行为
+        checkBound();
+        // 1. 拿到所有的块元素
+        let items = document.getElementsByClassName("item");
+        for (let i = 0; i < items.length; i++) {
+          // 拿到每个块元素
+          let item = items[i];
+          // 拿到每个块元素的数据源（块元素在16宫格的行数和列数）
+          let blockModel = currentModel[i];
+
+          // 2. 根据每个块元素的数据源（行数和列数），通过 top 和 left 定位每个块元素的位置
+          // 每个块元素的位置由两个值确定：1. 16宫格的位置，2. 块元素在16宫格的位置
+          item.style.top = (currentY + blockModel.row) * step + "px";
+          item.style.left = (currentX + blockModel.col) * step + "px";
+        }
+      }
+
+      /* 监听用户按键盘的函数 */
+      function onkeydown() {
+        document.addEventListener("keydown", (event) => {
+          keynum = window.event ? event.keyCode : event.which;
+          switch (keynum) {
+            case 38: // 旋转
+              rotate();
+              break;
+            case 40: // 下移
+              move(0, 1);
+              break;
+            case 37: // 左移
+              move(-1, 0);
+              break;
+            case 39: // 右移
+              move(1, 0);
+              break;
+          }
+        });
+      }
+
+      /* 控制块元素移动的方法（x: 块元素的横向移动，y: 块元素的纵向移动）*/
+      function move(x, y) {
+        // const box = document.getElementsByClassName("item")[0];
+        // box.style.top = parseInt(box.offsetTop || 0) + y * step + "px";
+        // box.style.left = parseInt(box.offsetLeft || 0) + x * step + "px";
+
+        // 让 16 宫格移动
+        currentX += x;
+        currentY += y;
+        locationModel();
+      }
+
+      /* 旋转 */
+      function rotate() {
+        // 算法：旋转后的行 = 旋转前的列； 旋转后的列 = 3 - 旋转前的行
+
+        // 遍历 模型数据源
+        for (const key in currentModel) {
+          if (currentModel.hasOwnProperty(key)) {
+            // 块元素的数据源
+            let blockModel = currentModel[key];
+            // 实现算法
+            let temp = blockModel.row;
+            blockModel.row = blockModel.col;
+            blockModel.col = 3 - temp;
+          }
+        }
+
+        locationModel();
+      }
+
+      /* 控制模型在容器中移动 */
+      function checkBound() {
+        // 定义模型可以活动的边界
+        const leftBound = 0;
+        const rightBound = col_count;
+        const bottomBound = row_count;
+
+        // 当前元素超出了边界后，让16宫格 后退一步
+        for (const key in currentModel) {
+          if (currentModel.hasOwnProperty(key)) {
+            let blockModel = currentModel[key];
+            // 左侧边界
+            if (blockModel.col + currentX < leftBound) {
+              currentX++;
+            } // 右侧边界
+            if (blockModel.col + currentX >= rightBound) {
+              currentX--;
+            } // 底部边界
+            if (blockModel.row + currentY >= bottomBound) {
+              currentY--;
+            }
+          }
+        }
+      }
+
+      main(); //调用入口函数
+    </script>
+  </body>
+</html>
